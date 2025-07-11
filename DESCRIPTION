@@ -1,0 +1,36 @@
+Package: MDCcure
+Type: Package
+Title: High-Performance Functions for Martingale Difference Correlation and Hypothesis Testing in Mixture Cure Models
+Version: 0.1.0
+Authors@R: c(
+    person("Blanca", "Monroy-Castillo", , "blancamonroy.96@gmail.com", role = c("aut", "cre")),
+    person("Amalia Jácome", role = "aut"),
+    person("Ricardo Cao", role = "aut"),
+    person("Ingrid Van Keilegom", role = "aut"),
+    person("Ursula Müller", role = "aut")
+  )
+Description: Provides efficient tools for computing martingale difference correlation (MDC), martingale difference divergence (MDD), and their partial extensions to assess conditional mean dependence. Separately, the package introduces a novel hypothesis test for detecting covariate effects on the cure rate in mixture cure models, using MDC-based statistics. These methods enable both general dependence analysis and targeted inference in survival models with a cure fraction.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+VignetteBuilder: knitr
+Suggests: 
+    knitr,
+    rmarkdown
+LinkingTo: 
+    Rcpp, 
+    RcppArmadillo, 
+    RcppParallel
+Imports:
+    Rcpp,
+    ggplot2,
+    ggtext,
+    gridExtra,
+    future,
+    future.apply,
+    smcure,
+    npcure,
+    survival
+

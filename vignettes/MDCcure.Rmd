@@ -1,0 +1,381 @@
+---
+title: "MDCcure"
+author: "Blanca Monroy-Castillo"
+abstract: |
+  The MDCcure package provides statistical tools to test the effect of covariates on the cure rate in mixture cure models. It implements nonparametric hypothesis tests based on the martingale difference correlation (MDC) and its partial version (PMDC), which measure departures from conditional mean independence. Since the cure status is partially observed due to censoring, the package uses an estimator that adjusts for this by leveraging nonparametric methods for cure probability and latency functions.
+  Main features include estimation of MDC and partial MDC, hypothesis tests via permutation and chi-square approximations, and a goodness-of-fit test for parametric cure rate models. The package incorporates efficient implementations in C++ with parallel computing to handle the computational intensity of the MDC methods.
+  The package also offers visualization tools to compare parametric fits to flexible nonparametric estimators, aiding interpretation and model assessment.
+output:
+  pinp::pinp:
+    latex_engine: xelatex
+bibliography: references.bib
+output_dir: "vignettes"
+one_column: true
+vignette: >
+  %\VignetteIndexEntry{MDCcure}
+  %\VignetteKeyword{Nonparametric test}
+  %\VignetteKeyword{Martingale difference correlation}
+  %\VignettePackage{mypckg}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, fig.width = 4.8, fig.height = 4.8)
+```
+
+# Introduction
+
+Standard statistical methods for time-to-event analysis—often referred to as survival models—typically assume that every subject in the study population is susceptible to the event of interest and will eventually experience the event if the follow-up is sufficiently long. However, in practice, a fraction of individuals may never experience the event. These subjects are considered as having infinite survival times and are referred to as *cured* [@peng2021cure].
+
+Over the last few decades, specific methods have been developed to deal with this type of data, collectively known as *cure model analysis*. Several reviews and methodological contributions summarize the theory and application of these models [@maller2024mixture; @peng2021cure; @patilea2020general; @amico2018cure; @morbiducci2003classification].
+
+Cure models explicitly account for a subpopulation that is not susceptible to the event, allowing direct modeling of the cure proportion and the effects of covariates on it. Additionally, these models provide inference on the survival distribution of the uncured (susceptible) subjects. Most existing cure models are modifications of standard survival models that incorporate the cure probability. Based on how this incorporation is done, cure models are typically categorized as either *mixture* or *nonmixture* cure models. A key advantage of **mixture cure models** is that they allow covariates to affect both the cured and uncured groups differently. This package focuses on mixture cure models.
+
+Let \( Y \) denote the time to event. It is assumed that subjects are subject to right censoring, and the censoring time \( C \) and the event time \( Y \) are conditionally independent given covariates \( \boldsymbol{X} \). The conditional distribution and survival functions of \( Y \) are given by
+\[
+F(t|\boldsymbol{x}) = \mathbb{P}(Y \leq t \mid \boldsymbol{X} = \boldsymbol{x}), \quad S(t|\boldsymbol{x}) = 1 - F(t|\boldsymbol{x}).
+\]
+Under right censoring, only the pair \( (T, \delta) \) is observed, where \( T = \min(Y, C) \) and \( \delta = \mathbb{I}(Y \leq C) \) is the censoring indicator. The conditional distributions of \( C \) and \( T \) are denoted by \( G(t|\boldsymbol{x}) \) and \( H(t|\boldsymbol{x}) \), respectively.
+
+Define the cure indicator \( \nu = \mathbb{I}(Y = \infty) \), where \( \nu = 0 \) for susceptible individuals and \( \nu = 1 \) for cured individuals. The probability of not being cured (*incidence*) is \( p(\boldsymbol{x}) = \mathbb{P}(\nu = 0 \mid \boldsymbol{X} = \boldsymbol{x}) \), and the conditional survival function of the uncured group (*latency*) is
+\[
+S_0(t|\boldsymbol{x}) = \mathbb{P}(Y > t \mid \nu = 0, \boldsymbol{X} = \boldsymbol{x}).
+\]
+Then, the mixture cure model can be written as:
+\[
+S(t|\boldsymbol{x}) = 1 - p(\boldsymbol{x}) + p(\boldsymbol{x}) S_0(t|\boldsymbol{x}).
+\]
+
+### Motivation for Covariate Testing
+
+Testing whether a covariate has an effect on the cure rate \( 1 - p(\boldsymbol{x}) \) can be viewed as a problem of statistical dependence between the cure status \( \nu \) and covariates \( \boldsymbol{X} \). Various methods have been proposed to detect such dependencies, including universally consistent measures such as distance correlation [@szekely_measuring_2007], the Hilbert–Schmidt independence criterion [@gretton2005kernel], and the Heller–Heller–Gorfine statistic [@heller2013consistent].
+
+More recently, @shao2014martingale proposed the **martingale difference correlation (MDC)** to measure the departure from conditional mean independence between a scalar response \( Y \) and a vector predictor \( \boldsymbol{X} \):
+\[
+\mathbb{E}(Y \mid \boldsymbol{X}) = \mathbb{E}(Y) \quad \text{a.s.}
+\]
+The martingale difference correlation is defined as:
+\[
+\text{MDC}(Y \mid \boldsymbol{X})^2 = 
+\begin{cases}
+\dfrac{\text{MDD}(Y \mid \boldsymbol{X})^2}{\sqrt{\text{Var}(Y)^2 \mathcal{V}^2(\boldsymbol{X})}}, & \text{if } \text{Var}(Y)^2 \mathcal{V}^2(\boldsymbol{X}) > 0, \\
+0, & \text{otherwise},
+\end{cases}
+\]
+where \( \mathcal{V}^2(\boldsymbol{X}) \) is the distance variance [@szekely_measuring_2007], and **martingale difference divergence (MDD)** is given by:
+\[
+\text{MDD}(Y \mid \boldsymbol{X})^2 = \frac{1}{c_p} \int_{\mathbb{R}^p} \frac{|g_{Y,X}(s) - g_Y g_X(s)|^2}{|s|_p^{1+p}} ds,
+\]
+with \( g_{Y,X}(s) = \mathbb{E}(Y e^{i \langle s, \boldsymbol{X} \rangle}) \), \( g_Y = \mathbb{E}(Y) \), and \( g_X(s) = \mathbb{E}(e^{i \langle s, \boldsymbol{X} \rangle}) \).
+
+Two estimators are commonly used: a biased version (MDCV) from @shao2014martingale and an unbiased version (MDCU) developed in @park2015partial.
+
+### Partial Martingale Difference Correlation
+
+The notion of conditional mean independence has been extended to settings where one adjusts for an additional set of covariates \( \boldsymbol{Z} \). Specifically, \( Y \) is said to be **conditionally mean independent** of \( \boldsymbol{X} \) given \( \boldsymbol{Z} \) if:
+\[
+\mathbb{E}(Y \mid \boldsymbol{X}, \boldsymbol{Z}) = \mathbb{E}(Y \mid \boldsymbol{Z}) \quad \text{a.s.}
+\]
+
+@park2015partial introduced a measure called the **partial martingale difference correlation (pMDC)** to quantify this conditional mean independence, allowing one to assess the dependence of \( Y \) on \( \boldsymbol{X} \) while adjusting for \( \boldsymbol{Z} \).
+
+This framework motivates a nonparametric test for covariate effects in cure models, since the cure probability can be expressed as \( 1 - p(\boldsymbol{x}) = \mathbb{E}(\nu \mid \boldsymbol{X} = \boldsymbol{x}) \). That is, testing the effect of covariates on the cure rate reduces to testing whether the cure indicator \( \nu \) is conditionally mean independent of \( \boldsymbol{X} \). 
+
+To extend this idea to two covariates, we use the **partial martingale difference correlation**, enabling robust and flexible hypothesis testing in the context of mixture cure models.
+
+	
+# Nonparametric hypothesis tests for the cure rate
+
+The proposed hypotheses are the following:
+
+\begin{equation}\label{Eq:Test}
+	\mathcal{H}_0 : \mathbb{E}(\nu | \boldsymbol{X}) \,\, \equiv \,\, 1 - p \quad \text{a.s.} \quad \text{vs} \quad \mathcal{H}_1 : \mathbb{E}(\nu | \boldsymbol{X}) \,\, \not\equiv \,\, 1 - p \quad \text{a.s.},
+\end{equation}
+
+which tests whether the covariate vector $\boldsymbol{X}$ has an effect on the cure probability. The main problem with the hypotheses \eqref{Eq:Test} is that the response variable (the cure indicator, $\nu$) is only partially observed due to censoring. 
+
+In this package, this challenge is addressed by estimating the cure indicator using the methodology proposed by @amico2021assessing. The idea is as follows: define $\tau$ as the upper limit of the support of the lifetime for a susceptible individual, where $\tau = \sup_{x} \tau(x)$ and $\tau(x) = \inf\{t:S_0(t|x) = 0\}$. We assume that $\tau < \infty$ and that the follow-up time is long enough so that $\tau < \tau_{G(x)}$ for all $x$, where $\tau_{G(x)} = \inf\{t:G(t|x) = 1\}$. 
+
+Therefore, it is reasonable to consider that all the individuals with a censored observed time greater than $\tau$ can be categorized as cured $(\nu = 1)$. Then, the proxy of the cure rate $\nu$ is defined as:
+
+\begin{equation}\label{eq:nu_tilde_0}
+	\tilde{\nu} = \mathbb{I}(T > \tau) + (1-\delta)\mathbb{I}(T \leq \tau) \, \frac{1 - p(\boldsymbol{X})}{1-p(\boldsymbol{X}) + p(\boldsymbol{X})S_0(T|\boldsymbol{X})}.
+\end{equation}
+
+Since under $\mathcal{H}_0$ the cure probability does not depend on $\boldsymbol{X}$, the approximation of $\nu$ becomes under $\mathcal{H}_0$:
+
+\begin{equation}\label{eq:nu_tilde}
+	\tilde{\nu}_0 = \mathbb{I}(T > \tau) + (1-\delta)\mathbb{I}(T \leq \tau) \, \frac{1 - p}{1-p + pS_0(T|\boldsymbol{X})}.
+\end{equation}
+
+One issue with the proposal of $\tilde{\nu}_0$ is that it cannot be computed in practice since $p$, $\tau$, and the latency $S_0(t|\boldsymbol{X})$ are unknown. An estimator that handles this problem is proposed as:
+
+\begin{equation}\label{eq:nu_hat}
+	\hat{\nu}_{h} = \mathbb{I}(T > \hat{\tau}) + (1-\delta)\mathbb{I}(T \leq \hat{\tau}) \, \frac{1 - \hat{p}}{1-\hat{p} + \hat{p}\hat{S}_{0,h}(T|\boldsymbol{X})}
+\end{equation}
+
+where $\hat{p}$ is the nonparametric estimator proposed by @laska1992nonparametric, $\hat{\tau}$ is the largest observed uncensored survival time, and $\hat{S}_{0,h}(T|\boldsymbol{X})$ is the nonparametric estimator based on the Beran estimator proposed by @lopez2017nonparametric.
+
+Two statistics for the covariate hypothesis test, based on the martingale difference correlation between the estimated cure rate $\hat{\nu}_h$ and the covariate $\boldsymbol{X}$, are proposed:
+
+\[
+	\text{MDCV}_n(\hat{\nu}_h|\boldsymbol{X})^2 \quad \text{and} \quad \text{MDCU}_n(\hat{\nu}_h|\boldsymbol{X})^2,
+\]
+
+where $\text{MDCV}_n$ and $\text{MDCU}_n$ correspond to the biased and bias-corrected estimators, respectively.
+
+In practice, we do not have access to the true null distribution of these statistics. To address this, the null distribution is approximated using two methods: a permutation test (see @gretton2007kernel, @pfister2018kernel) and a chi-square test. 
+
+The permutation test compares the statistic computed from the original data to the distribution of the statistic computed over multiple randomly permuted datasets. While this approach is nonparametric and robust, it can be computationally demanding, especially for large sample sizes or when many permutations are required.
+
+To provide a faster alternative, a chi-square approximation is implemented for the $\text{MDCU}_n^2$ test statistic. This approach extends the idea proposed by @shen2022chi and offers a computationally efficient solution for hypothesis testing.
+
+# Goodness-of-Fit Test
+
+As discussed by @muller2019goodness, most studies in the cure model literature either assume that no cure fraction exists, or, if it does, that it follows a logistic model. However, both assumptions may be unrealistic in practice.
+
+First, the existence of a cure fraction has been debated in the survival analysis literature. Second, even when a cure fraction is present, there is no theoretical reason to expect the cure probability to follow a monotonic function of the covariates—let alone a logistic form.
+
+To address this issue, @muller2019goodness propose **goodness-of-fit tests** for evaluating whether a parametric model for the cure probability is consistent with the observed data. These tests are flexible and well-suited to situations where the functional form of the cure model is uncertain or possibly misspecified. Notably, their test is the first to allow the cure rate to vary with a covariate.
+
+The hypotheses tested are:
+
+$$
+\mathcal{H}_0 : p(x) = p_{\theta}(x) \quad \text{for some } \theta \in \Theta \quad \text{vs.} \quad \mathcal{H}_1 : p(x) \neq p_{\theta}(x) \quad \forall \theta \in \Theta,
+$$
+
+where $\Theta$ is a finite-dimensional parameter space, and $p_{\theta}(x)$ is a known parametric form up to the parameter vector $\theta$.
+
+The proposed test statistic is a weighted \( L_2 \)-distance between a nonparametric estimator \( \hat{p}_h(x) \) of the cure probability and its parametric counterpart \( p_{\hat{\theta}}(x) \) estimated under \( \mathcal{H}_0 \). The test statistic is defined as:
+
+$$
+\mathcal{T}_n = nh^{1/2} \int \left( \hat{p}_h(x) - p_{\hat{\theta}}(x) \right)^2 \pi(x)\, dx,
+$$
+
+where:
+
+- \( \hat{p}_h(x) \) is a nonparametric estimator with bandwidth \( h \),
+- \( \hat{\theta} \) is an estimator of the parameter \( \theta \),
+- \( \pi(x) \) is a user-specified weight function (often a density on the covariate space).
+
+In practice, the empirical version of the test statistic is used:
+
+$$
+\tilde{\mathcal{T}}_n = nh^{1/2} \frac{1}{n} \sum_{i=1}^n \left( \hat{p}_h(X_i) - p_{\hat{\theta}}(X_i) \right)^2.
+$$
+The critical values of the test are approximated using a bootstrap procedure.
+
+# MDCcure
+
+## Overview of the package 
+
+The **MDCcure** package implements the methodology proposed in @monroy2025covariate to test whether a covariate or a set of covariates has an effect on the cure rate. This methodology is based on the *martingale difference correlation* (MDC). Since the MDC function is not available on CRAN, it can be obtained from older versions of the **EDMeasure** package. However, the original implementation is computationally intensive. To address this, **MDCcure** leverages C++ and parallel computing using **RcppParallel** to improve efficiency.
+
+## Main Features
+
+The **MDCcure** package offers functionality in three main areas:
+
+### 1. Dependence Measures
+
+The package provides functions to estimate the *martingale difference correlation* (`mdc()`), *martingale difference divergence* (`mdd()`), and their partial counterparts—*partial martingale difference correlation* and *partial martingale difference divergence* (`pmdc()` and `pmdd()`). It also includes a permutation test for MDC and a chi-squared test based on the bias-corrected MDC (`mdc_test()`), which test for dependence between a response covariate, $Y$, and a covariate vector $\boldsymbol{X}$ in the conditional mean, that is, whether the conditional mean of $Y$ given $\boldsymbol{X}$ depends on $\boldsymbol{X}$ is tested.
+
+
+### 2. Covariate Hypothesis Testing for the Cure Rate in Mixture Cure Models
+
+The main function, `testcov()`, enables formal testing of whether a covariate significantly influences the cure rate in a mixture cure model. This is extended to handle two covariates with the `testcov2()` function.
+
+### 3. Goodness-of-Fit Testing for the Cure Rate in Mixture Cure Models
+
+The package implements the goodness-of-fit (GOF) test which assesses whether the specified parametric model for the cure rate adequately fits the data. 
+
+In addition to the formal statistical test, **MDCcure** includes visualization tools that compare the parametric cure rate function with a flexible nonparametric estimate, which is obtained using the `probcure()` function from the **npcure** package [@lopez2021npcure]. This graphical comparison provides an intuitive way to assess model adequacy and explore deviations from the assumed model.
+
+## Using the package
+The following code illustrates a typical call:
+
+```{r}
+library(MDCcure)
+```
+
+## Dependence measures 
+
+For the first part, and for illustration purposes, we will simulate data to demonstrate the main functionalities of the package. The functions `mdc` and `mdd` return the squared martingale difference correlation and the martingale difference divergence, respectively. Note that two options for the `center` argument are available: `"U"` for the unbiased estimator and `"D"` for the double-centered version, which results in a biased estimator. 
+
+```{r}
+set.seed(123)
+X <- matrix(rnorm(10 * 2), 10, 2)
+Y <- matrix(rnorm(10 * 2), 10, 2)
+
+mdc(X, Y, center = "U")
+mdc(X, Y, center = "D")
+```
+
+To formally assess the dependence between a response variable $Y$ and a covariate vector $\boldsymbol{X}$, the function `mdc_test()` provides hypothesis testing procedures based on the **martingale difference correlation** framework.
+
+This function supports multiple testing approaches:
+
+- **MDCU**: a permutation test based on the **bias-corrected** version of the martingale difference correlation.
+- **MDCV**: a permutation test based on the **biased** (double-centered) version.
+- **FMDCU**: a fast approximation to the test using the **asymptotic distribution** of the bias-corrected martingale difference divergence, which is dominated in the upper tail for a **chi-squared distribution**.
+
+The null hypothesis in all cases is:
+\[
+\mathcal{H}_0: \mathbb{E}(Y \mid \boldsymbol{X}) = \mathbb{E}(Y) \quad \text{a.s.}
+\]
+i.e., that $Y$ is mean independent of $\boldsymbol{X}$.
+
+The `pmdc()` and `pmdd()` functions provide scalar measures to quantify conditional mean dependence while adjusting for a set of conditioning variables.
+
+Specifically:
+
+- `pmdc()` returns the **squared partial martingale difference correlation**, which measures the conditional mean dependence between $Y$ and $\boldsymbol{X}$ adjusting on $\boldsymbol{Z}$.
+- `pmdd()` returns the **squared partial martingale difference divergence**.
+
+```{r}
+set.seed(123)
+X <- matrix(rnorm(10 * 2), 10, 2)
+Y <- matrix(rnorm(10 * 2), 10, 2)
+Z <- matrix(rnorm(10 * 2), 10, 2)
+
+pmdd(X, Y, Z)
+pmdc(X, Y, Z)
+```
+
+## Covariate hypothesis test for the cure rate in mixture cure models 
+
+### With one covariate
+
+The `testcov()` function performs **nonparametric hypothesis testing** to assess whether a covariate is associated with the **cure probability** in a **mixture cure model**. This function supports several types of test statistics, including those based on the **martingale difference correlation (MDC)** and an alternative **GOFT** test, which compares the distance between two nonparametric estimators of the cure probability: one under the null hypothesis (constant cure rate) and the other under the alternative hypothesis (covariate-dependent cure rate).
+
+The covariate effect is evaluated using observed survival times, censoring indicators, and kernel-based estimation of the latency. The test is flexible in terms of bandwidth selection and computational strategies.
+
+#### Available Test Methods
+
+The `method` argument allows the user to choose among the following options:
+
+- `"MDCU"`: Martingale Difference Correlation using **U-centering**, evaluated via a permutation test.
+- `"MDCV"`: Martingale Difference Correlation using **double-centering**, with a permutation test.
+- `"FMDCU"`: A **fast approximation** of `"MDCU"` using an **asymptotic chi-squared distribution**.
+- `"GOFT"`: An alternative **goodness-of-fit test** specifically designed for cure models.
+- `"All"`: Executes all available tests and returns their results in a single output.
+
+#### Bandwidth Selection
+
+The test relies on the estimation of the cure status, which involves kernel smoothing and requires a bandwidth parameter `h`. You can:
+
+- Provide a numeric value for manual bandwidth selection.
+- Set `h = NULL` to let the function select an optimal bandwidth automatically.
+- Use `h = "bootstrap"` to apply the **bootstrap bandwidth selection method** proposed by @lopez2017nonparametric1. Note: This option can significantly increase computation time.
+
+By default, `testcov()` uses **parallel computing** to improve efficiency (`parallel = TRUE`). It is possible to control the number of cores used via the `n_cores` argument. If `n_cores = NULL`, the function will automatically detect the number of available cores and use all but one of them.
+
+### With two covariates
+
+The `testcov2()` function performs **nonparametric hypothesis testing** to assess whether a covariate is associated with the **cure probability**, while adjusting for a second covariate in a **mixture cure model**. In other words, it evaluates whether a covariate has an effect on the cure rate, given that another covariate is already known to influence it.
+
+\[
+\mathcal{H}_0 : \mathbb{E}(\nu \mid \boldsymbol{X}, \boldsymbol{Z}) \equiv 1 - p(\boldsymbol{Z}) \quad \text{a.s.} 
+\quad \text{vs} \quad 
+\mathcal{H}_1 : \mathbb{E}(\nu \mid \boldsymbol{X}, \boldsymbol{Z}) \not\equiv 1 - p(\boldsymbol{Z}) \quad \text{a.s.},
+\]
+
+where \(\nu\) denotes the (unobserved) cure status, and \(p(\cdot)\) is the cure probability function.
+
+This test extends the theory developed for a single covariate to the two-covariate setting. Estimation of the cure status relies on kernel smoothing and requires a **bandwidth matrix** \(\boldsymbol{H}\). If `H = NULL`, the bandwidth matrix is automatically selected using the rule-of-thumb method. 
+
+## Goodnnes-of-fit test for the cure rate in a mixture cure model
+
+The `goft()` function performs a **goodness-of-fit test** to assess whether a given parametric model—depending on a covariate—is appropriate for modeling the cure rate in a **mixture cure model**.
+
+Key features include:
+
+- **Automatic bandwidth selection** when `h = NULL`,
+- A **default initial value** for the parameter vector $\theta$ if `theta0 = NULL`,
+- Support for three parametric cure rate models via the `model` argument: `"logit"`, `"probit"`, and `"cloglog"`.
+
+In addition to statistical testing, the function `plotCure()` provides a visual comparison between the **nonparametric** and **parametric** estimations of the cure rate, enabling users to better assess the model's adequacy.
+
+### Example
+In order to illustrate the use of the functions defined above, we simulate data following the setting described in @muller2019goodness. In this example, the cure rate is generated from a logistic model given by
+
+$$
+p(x) = \frac{1}{1 + \exp(1 + x)},
+$$
+
+so it follows a logistic form and depends on the covariate $X$. Additionally, we simulate a second covariate $Z$, which is independent of both $X$ and the cure rate. 
+ 
+```{r, fig.width=6.5, fig.height=3.5, fig.align='center'}
+set.seed(1234)
+
+theta0 = c(1,1)
+gamma0 = 0.5
+gamma1 = 0.5
+
+cT = 0
+
+n <- 200
+maxT = 0.02*n
+
+X = runif(n,-1,1)
+Z = runif(n,-1,1)
+phi = exp(theta0[1]+theta0[2]*X)
+phi = phi/(1+phi)   
+B = (runif(n) <= phi)
+
+aT = (X+1)^cT
+lambdaX = exp(gamma0+gamma1*X)
+bT = lambdaX^(-1/aT)
+tau = qweibull(0.9,shape=mean(aT),scale=mean(bT))
+Y = rep(100000,n)
+count = 0
+for (j in 1:n)
+{if (B[j]==1)
+{stop = 0
+while (stop==0)  
+{Y[j] = rweibull(1,shape=aT[j],scale=bT[j])
+if ((Y[j] > tau)*(count <= maxT)) 
+{Y[j] = tau
+count = count + 1}
+if (Y[j] <= tau) stop = 1}}}
+
+aC = 1
+bC = 1.5
+C = rweibull(n,shape=aC,scale=bC)
+C = replace(C,C>tau,tau+0.001)  
+
+T = apply(cbind(Y,C),1,min)
+Delta = as.numeric(Y <= C)
+
+#Covariate hypothesis test for the cure rate with one covariate
+testcov(X, T, Delta, method = "All")
+
+#Covariate hypothesis test for the cure rate with two covariates
+testcov2(X, T, Z, Delta)
+testcov2(Z, T, X, Delta)
+
+#Goodness-of-fit test for the cure rate 
+goft(X, T, Delta, model = "logit")
+plotCure(X, T, Delta, density = FALSE)
+```
+
+In the first instance, we test whether the cure fraction depends on the covariate $X$. All available methods are applied. By default, the function uses `method = "FMDCU"`, which corresponds to the fast chi-square test for the  martingale difference correlation.
+In all cases, the resulting p-values are below 0.05, which aligns with the data-generating mechanism, the cure probability was simulated to depend on $X$ through a logistic function. This provides evidence against the null hypothesis of no covariate effect on the cure rate.
+
+Secondly, we test whether the cure fraction depends on two covariates. The order of covariates is crucial in this test: `testcov2(X, Y, Z)` is not equivalent to `testcov2(Z, Y, X)`.
+
+- In the first call, `testcov2(X, Y, Z)`, we test whether the cure fraction depends on $X$, given that it depends on $Z$. The resulting p-value is less than 0.05, indicating that $X$ provides additional explanatory power. This aligns with the simulation setup, where the cure fraction depends on $X$.
+
+- In the second call, `testcov2(Z, Y, X)`, we test whether the cure fraction depends on $Z$, given that it depends on $X$. The p-value is greater than 0.05, indicating that $Z$ does not provide additional information once $X$ is accounted for. Again, this agrees with the simulation design, where the cure probability is independent of $Z$.
+
+This example illustrates the asymmetry of the test and the importance of specifying the covariates in the correct order.
+
+Finally, in the third part we test if the data fit to a logistic model. Note that:
+
+- The p-value is greater than 0.05, which aligns with the simulation.
+- The plot shows both estimations:
+  - Parametric (red)
+  - Nonparametric (blue)
+- For the parametric case, the parameter \(\theta\) is given by default when `theta = NULL` and is obtained with the `smcure()` function from the **smcure** package. 
+- Additionally, it is possible to add the density of the covariate when `density = TRUE`.
