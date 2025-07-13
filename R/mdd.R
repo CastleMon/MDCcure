@@ -17,7 +17,7 @@
 #'
 #' @references
 #' Shao, X., and Zhang, J. (2014). Martingale difference correlation and its use in high-dimensional variable screening.
-#'  \emph{Journal of the American Statistical Association}, \bold{109}(507), 1302-1318. \url{http://dx.doi.org/10.1080/01621459.2014.887012}.
+#'  \emph{Journal of the American Statistical Association}, \bold{109}(507), 1302-1318. \doi{10.1080/01621459.2014.887012}.
 #'
 #' @examples
 #' # Generate example data

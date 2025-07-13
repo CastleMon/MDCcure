@@ -81,5 +81,5 @@ goft(x, t, d, model = "logit")
 \references{
 Müller, U.U, & Van Keilegom, I. (2019).
 Goodness-of-fit tests for the cure rate in a mixture cure model.
-\emph{Biometrika}, 106, 211-227. \url{10.1093/biomet/asy058}
+\emph{Biometrika}, 106, 211-227. \doi{10.1093/biomet/asy058}
 }

@@ -63,18 +63,18 @@
 #' @references
 #' Amico, M, Van Keilegom, I. & Han, B. (2021).
 #' Assessing cure status prediction from survival data using receiver operating characteristic curves.
-#' \emph{Biometrika}, 108(3), 727–740. \url{10.1093/biomet/asaa080}
+#' \emph{Biometrika}, 108(3), 727–740. \doi{10.1093/biomet/asaa080}
 #'
 #' López-Cheda, A., Cao, R., Jácome, M. A., & Van Keilegom, I. (2016).
 #' Nonparametric incidence estimation and bootstrap bandwidth selection in mixture cure models.
-#' \emph{Computational Statistics & Data Analysis}, 100, 490–502. \url{10.1016/j.csda.2016.04.006}
+#' \emph{Computational Statistics & Data Analysis}, 100, 490–502. \doi{10.1016/j.csda.2016.04.006}
 #'
 #' Müller, U.U, & Van Keilegom, I. (2019).
 #' Goodness-of-fit tests for the cure rate in a mixture cure model.
-#' \emph{Biometrika}, 106, 211-227. \url{10.1093/biomet/asy058}
+#' \emph{Biometrika}, 106, 211-227. \doi{10.1093/biomet/asy058}
 #'
 #' Shao, X., & Zhang, J. (2014). Martingale difference correlation and its use in high-dimensional variable screening.
-#' \emph{Journal of the American Statistical Association}, 105, 144-165. \url{10.1080/01621459.2014.887012}
+#' \emph{Journal of the American Statistical Association}, 105, 144-165. \doi{10.1080/01621459.2014.887012}
 #'
 #' @seealso
 #'

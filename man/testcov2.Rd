@@ -52,7 +52,7 @@ The null distribution is approximated using a permutation test.
 }
 \references{
 Park, T., Saho, X. & Yao, S. (2015). Partial martingale difference correlation.
-\emph{Electronic Journal of Statistics}, 9, 1492–1517. \url{10.1214/15-EJS1047}
+\emph{Electronic Journal of Statistics}, 9, 1492–1517. \doi{10.1214/15-EJS1047}
 }
 \seealso{
 \code{\link{pmdc}} for the partial martingale difference correlation, \code{\link{pmdd}} for the partial martingale difference divergence,

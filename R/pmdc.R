@@ -10,7 +10,7 @@
 #' @return Returns the squared partial martingale difference correlation of \code{Y} given \code{X}, adjusting for the dependence on \code{Z}.
 #'
 #' @references
-#' Park, T., Shao, X., and Yao, S. (2015). Partial martingale difference correlation. \emph{Electronic Journal of Statistics}, \bold{9}(1), 1492-1517. \url{http://dx.doi.org/10.1214/15-EJS1047}.
+#' Park, T., Shao, X., and Yao, S. (2015). Partial martingale difference correlation. \emph{Electronic Journal of Statistics}, \bold{9}(1), 1492-1517. \doi{10.1214/15-EJS1047}.
 #'
 #' @examples
 #' # Generate example data
