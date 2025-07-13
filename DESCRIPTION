@@ -9,7 +9,7 @@ Authors@R: c(
     person("Ingrid Van Keilegom", role = "aut"),
     person("Ursula Müller", role = "aut")
   )
-Description: Provides efficient tools for computing martingale difference correlation (MDC), martingale difference divergence (MDD), and their partial extensions to assess conditional mean dependence. Separately, the package introduces a novel hypothesis test for detecting covariate effects on the cure rate in mixture cure models, using MDC-based statistics. These methods enable both general dependence analysis and targeted inference in survival models with a cure fraction.
+Description: Provides efficient tools for computing martingale difference correlation, martingale difference divergence, and their partial extensions to assess conditional mean dependence. Separately, the package introduces a novel hypothesis test for detecting covariate effects on the cure rate in mixture cure models, using MDC-based statistics. These methods enable both general dependence analysis and targeted inference in survival models with a cure fraction.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
@@ -18,7 +18,8 @@ RoxygenNote: 7.3.2
 VignetteBuilder: knitr
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    pinp
 LinkingTo: 
     Rcpp, 
     RcppArmadillo, 
@@ -33,5 +34,6 @@ Imports:
     smcure,
     npcure,
     survival
+SystemRequirements: BLAS, LAPACK
 URL: https://github.com/CastleMon/MDCcure
 BugReports: https://github.com/CastleMon/MDCcure/issues
