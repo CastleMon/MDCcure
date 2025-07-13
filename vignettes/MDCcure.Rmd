@@ -5,9 +5,7 @@ abstract: |
   The MDCcure package provides statistical tools to test the effect of covariates on the cure rate in mixture cure models. It implements nonparametric hypothesis tests based on the martingale difference correlation (MDC) and its partial version (PMDC), which measure departures from conditional mean independence. Since the cure status is partially observed due to censoring, the package uses an estimator that adjusts for this by leveraging nonparametric methods for cure probability and latency functions.
   Main features include estimation of MDC and partial MDC, hypothesis tests via permutation and chi-square approximations, and a goodness-of-fit test for parametric cure rate models. The package incorporates efficient implementations in C++ with parallel computing to handle the computational intensity of the MDC methods.
   The package also offers visualization tools to compare parametric fits to flexible nonparametric estimators, aiding interpretation and model assessment.
-output:
-  pinp::pinp:
-    latex_engine: xelatex
+output: rmarkdown::html_vignette
 bibliography: references.bib
 output_dir: "vignettes"
 one_column: true
