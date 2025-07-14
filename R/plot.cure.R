@@ -34,7 +34,7 @@
 #'
 #' @return A ggplot object representing the cure probability plot.
 #'
-#' @seealso \code{\link[npcure]{probcure}}
+#' @seealso \link[npcure:probcure]{probcure}
 #'
 #' @examples
 #' \dontrun{

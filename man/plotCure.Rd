@@ -66,5 +66,5 @@ the density of the covariate can be shown as a shaded area with a secondary y-ax
 
 }
 \seealso{
-\code{\link[npcure]{probcure}}
+\link[npcure:probcure]{probcure}
 }
