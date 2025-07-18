@@ -35,5 +35,7 @@ Imports:
     smcure,
     npcure,
     survival
+NeedsCompilation: yes
+SystemRequirements: C++11, GNU make, TBB
 URL: https://github.com/CastleMon/MDCcure
 BugReports: https://github.com/CastleMon/MDCcure/issues
