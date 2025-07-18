@@ -68,7 +68,7 @@ plotCure <- function(x, time, delta,
 
   x0 <- seq(quantile(Data_clean$covariate, 0.05),
             quantile(Data_clean$covariate, 0.95),
-            length.out = 100)
+            length.out = 200)
 
 
   suppressWarnings(plan(multisession, workers = parallel::detectCores() - 1))
@@ -78,7 +78,7 @@ plotCure <- function(x, time, delta,
       tryCatch({
         probcure(covariate, Time, status, Data_clean,
                  x0 = xi, conflevel = 0.95,
-                 bootpars = controlpars(hsmooth = 10))
+                 bootpars = controlpars(hsmooth = 15))
       }, error = function(e) NULL)
     })
   )

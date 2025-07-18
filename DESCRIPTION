@@ -26,6 +26,7 @@ LinkingTo:
     RcppParallel
 Imports:
     Rcpp,
+    RcppParallel,
     ggplot2,
     ggtext,
     gridExtra,
@@ -34,6 +35,5 @@ Imports:
     smcure,
     npcure,
     survival
-SystemRequirements: BLAS, LAPACK
 URL: https://github.com/CastleMon/MDCcure
 BugReports: https://github.com/CastleMon/MDCcure/issues

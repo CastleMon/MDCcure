@@ -20,7 +20,7 @@ GOFT_cpp <- function(Data1, nsimb, h = NULL) {
 
   if (is.null(h)) {
     ch <- (max(X) - min(X))
-    h <- ch * n^(-1/5)
+    h <- 2 * ch * n^(-1/5)
   }
 
   data_mat <- as.matrix(data)

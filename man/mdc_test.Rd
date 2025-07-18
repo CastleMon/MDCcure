@@ -11,54 +11,34 @@ mdc_test(x, y, method, permutations = 999, parallel = TRUE, ncores = -1)
 
 \item{y}{Covariate vector.}
 
-\item{method}{Character string indicating the test to perform.
-One of:
+\item{method}{Character string indicating the test to perform. One of:
 \itemize{
-\item \code{"MDCU"}: Performs the MDC test with U-centering using permutations.
-\item \code{"MDCV"}: Performs the MDC test with double-centering using permutations.
-\item \code{"FMDCU"}: Performs the fast MDC test with U-centering.
-\item \code{"All"}: Performs all the above tests.
+\item \code{"MDCU"}: U-centering permutation test.
+\item \code{"MDCV"}: Double-centering permutation test.
+\item \code{"FMDCU"}: Fast asymptotic test with U-centering.
+\item \code{"All"}: All of the above.
 }}
 
-\item{permutations}{Number of permutations to use for the \code{"MDCU"} and \code{"MDCV"} methods.
-Defaults to 999.}
+\item{permutations}{Number of permutations. Defaults to 999.}
 
-\item{parallel}{Logical. If \code{TRUE}, parallel computing is used. Defaults to \code{TRUE}.}
+\item{parallel}{Logical. Whether to use parallel computing. Defaults to \code{TRUE}.}
 
-\item{ncores}{Integer. Number of threads to use for parallel computing
-(used only if \code{parallel = TRUE}).
-By default, it uses one less than the number of available CPU cores,
-ensuring at least one thread is used.}
+\item{ncores}{Number of threads for parallel computing (used only if \code{parallel = TRUE}).}
 }
 \value{
-A list containing the results of the selected test(s), including the corresponding p-value(s).
+A list containing the test results and p-values.
 }
 \description{
 Computes dependence between a multivariate dataset \code{x} and a univariate covariate \code{y}
 using different variants of the MDC (martingale difference correlation) test.
-Available methods include permutation-based tests with U-centering (\code{"MDCU"}) or
-double-centering (\code{"MDCV"}), a fast asymptotic version (\code{"FMDCU"}), or all of them at once (\code{"All"}).
-
-The permutation tests estimate p-values empirically, while the fast test computes an approximate
-p-value based on the chi-square distribution.
 }
 \examples{
-# Generate example data
 set.seed(123)
-n <- 50
-x <- matrix(rnorm(n * 5), nrow = n)  # multivariate data with 5 variables
-y <- rbinom(n, 1, 0.5)               # binary covariate
-
-# Run the fast MDC test with U-centering
+x <- matrix(rnorm(50 * 5), nrow = 50)
+y <- rbinom(50, 1, 0.5)
 mdc_test(x, y, method = "FMDCU")
 
-# Run permutation-based MDC test with U-centering
-mdc_test(x, y, method = "MDCU", permutations = 999)
-
-# Run all tests in parallel
-mdc_test(x, y, method = "All", permutations = 499, parallel = TRUE)
 }
 \references{
-Shao, X., and Zhang, J. (2014). Martingale difference correlation and its use in high-dimensional variable screening.
-\emph{Journal of the American Statistical Association}, \bold{109}(507), 1302-1318. \doi{10.1080/01621459.2014.887012}.
+Shao, X., and Zhang, J. (2014). Martingale difference correlation...
 }
