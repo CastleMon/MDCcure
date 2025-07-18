@@ -3,18 +3,20 @@
 using namespace Rcpp;
 
 arma::vec kernel_multivariate_cpp(const arma::rowvec& x, const arma::mat& X, const arma::mat& H) {
-  int n = X.n_rows;
   int d = X.n_cols;
 
   double det_H = arma::det(H);
   if (det_H <= 0) {
-    stop("The H matrix must be positive (det > 0).");
+    stop("The H matrix must be positive definite (det > 0).");
   }
 
-  arma::mat inv_H = arma::inv_sympd(H);
   arma::mat diff = X.each_row() - x;
 
-  arma::vec exponent = arma::sum((diff * inv_H) % diff, 1);
+  arma::mat solved = diff;
+  solved.each_row() /= H.diag().t();
+  solved = solved.t();
+
+  arma::vec exponent = arma::sum(diff.t() % solved, 0).t();
 
   double norm_const = std::pow(2 * M_PI, -0.5 * d) * std::pow(det_H, -0.5);
   arma::vec kernel_values = norm_const * arma::exp(-0.5 * exponent);
