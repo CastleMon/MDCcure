@@ -14,6 +14,8 @@
 #' @param theta A numeric vector of length 2, specifying the coefficients for the logistic model to generate the parametric estimate.
 #' @param legend.pos A character string indicating the position of the legend. Options include \code{"bottom"}, \code{"top"}, \code{"left"}, \code{"right"}, \code{"none"}, etc.
 #' @param density Logical; if \code{TRUE}, adds a secondary y-axis with the covariate density curve.
+#' @param hsmooth Numeric. Smoothing bandwidth parameter (h) for the cure probability estimator.
+#' @param npoints Integer. Number of points at which the estimator is evaluated over the covariate range.
 #'
 #' @details The function estimates the cure probability nonparametrically using the \code{\link{probcure}} function
 #' and overlays it with a parametric estimate obtained from a logistic regression model.
@@ -58,7 +60,9 @@ plotCure <- function(x, time, delta,
                           model = "logit",
                           theta = NULL,
                           legend.pos = "bottom",
-                          density = TRUE) {
+                          density = TRUE,
+                          hsmooth = 10,
+                          npoints = 100) {
 
   if (is.null(main.title)) main.title <- "Estimated Cure Probability"
   if (is.null(title.x)) title.x <- "Covariate"
@@ -68,7 +72,7 @@ plotCure <- function(x, time, delta,
 
   x0 <- seq(quantile(Data_clean$covariate, 0.05),
             quantile(Data_clean$covariate, 0.95),
-            length.out = 200)
+            length.out = npoints)
 
 
   suppressWarnings(plan(multisession, workers = parallel::detectCores() - 1))
@@ -78,7 +82,7 @@ plotCure <- function(x, time, delta,
       tryCatch({
         probcure(covariate, Time, status, Data_clean,
                  x0 = xi, conflevel = 0.95,
-                 bootpars = controlpars(hsmooth = 15))
+                 bootpars = controlpars(hsmooth = hsmooth))
       }, error = function(e) NULL)
     })
   )

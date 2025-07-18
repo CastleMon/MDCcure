@@ -13,7 +13,9 @@ plotCure(
   model = "logit",
   theta = NULL,
   legend.pos = "bottom",
-  density = TRUE
+  density = TRUE,
+  hsmooth = 10,
+  npoints = 100
 )
 }
 \arguments{
@@ -34,6 +36,10 @@ plotCure(
 \item{legend.pos}{A character string indicating the position of the legend. Options include \code{"bottom"}, \code{"top"}, \code{"left"}, \code{"right"}, \code{"none"}, etc.}
 
 \item{density}{Logical; if \code{TRUE}, adds a secondary y-axis with the covariate density curve.}
+
+\item{hsmooth}{Numeric. Smoothing bandwidth parameter (h) for the cure probability estimator.}
+
+\item{npoints}{Integer. Number of points at which the estimator is evaluated over the covariate range.}
 }
 \value{
 A ggplot object representing the cure probability plot.
