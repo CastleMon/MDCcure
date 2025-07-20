@@ -17,7 +17,7 @@
 #' @param hsmooth Numeric. Smoothing bandwidth parameter (h) for the cure probability estimator.
 #' @param npoints Integer. Number of points at which the estimator is evaluated over the covariate range.
 #'
-#' @details The function estimates the cure probability nonparametrically using the \code{\link{probcure}} function
+#' @details The function estimates the cure probability nonparametrically using the \code{\link[npcure:probcure]{probcure}} function
 #' and overlays it with a parametric estimate obtained from a logistic regression model.
 #' Confidence intervals (95%) are included for the nonparametric estimate. Optionally,
 #' the density of the covariate can be shown as a shaded area with a secondary y-axis.

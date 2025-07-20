@@ -51,7 +51,7 @@ complementary log-log link.
 An optional covariate density curve can be added as a secondary axis.
 }
 \details{
-The function estimates the cure probability nonparametrically using the \code{\link{probcure}} function
+The function estimates the cure probability nonparametrically using the \code{\link[npcure:probcure]{probcure}} function
 and overlays it with a parametric estimate obtained from a logistic regression model.
 Confidence intervals (95\%) are included for the nonparametric estimate. Optionally,
 the density of the covariate can be shown as a shaded area with a secondary y-axis.

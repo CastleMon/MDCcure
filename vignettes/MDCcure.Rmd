@@ -347,17 +347,20 @@ T = apply(cbind(Y,C),1,min)
 Delta = as.numeric(Y <= C)
 
 #Covariate hypothesis test for the cure rate with one covariate
-testcov(X, T, Delta, method = "All")
+testcov(X, T, Delta, method = "All", P = 499)
 
 #Covariate hypothesis test for the cure rate with two covariates
-testcov2(X, T, Z, Delta)
-testcov2(Z, T, X, Delta)
+testcov2(X, T, Z, Delta, P = 499)
+testcov2(Z, T, X, Delta, P = 499)
 
 #Goodness-of-fit test for the cure rate 
 goft(X, T, Delta, model = "logit")
-plotCure(X, T, Delta, density = FALSE)
+# plotCure(X, T, Delta, density = FALSE)
 ```
 
+```{r plotCure-figure, echo=FALSE, out.width='75%', fig.align='center'}
+knitr::include_graphics("Figures/Estimated_cure.pdf")
+```
 In the first instance, we test whether the cure fraction depends on the covariate $X$. All available methods are applied. By default, the function uses `method = "FMDCU"`, which corresponds to the fast chi-square test for the  martingale difference correlation.
 In all cases, the resulting p-values are below 0.05, which aligns with the data-generating mechanism, the cure probability was simulated to depend on $X$ through a logistic function. This provides evidence against the null hypothesis of no covariate effect on the cure rate.
 
